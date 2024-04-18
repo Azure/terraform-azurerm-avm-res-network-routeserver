@@ -53,13 +53,11 @@ module "naming" {
   version = "~> 0.3"
 }
 
-# This is required for resource modules
 resource "azurerm_resource_group" "this" {
   location = module.regions.regions[random_integer.region_index.result].name
   name     = module.naming.resource_group.name_unique
 }
 
-#create the cloud-init template for each 8k
 data "template_file" "node_config" {
   template = file("${path.module}/ios_config_template.txt")
   vars = {
@@ -67,8 +65,8 @@ data "template_file" "node_config" {
     nic_0_netmask    = cidrnetmask(module.virtual_network.subnets["NVASubnet"].address_prefixes[0])
     asn              = "65111"
     router_id        = "65.1.1.1"
-    avs_ars_ip_0     = module.full_route_server.route_server.virtual_router_ips[0]
-    avs_ars_ip_1     = module.full_route_server.route_server.virtual_router_ips[1]
+    avs_ars_ip_0     = module.full_route_server.resource.virtual_router_ips[0]
+    avs_ars_ip_1     = module.full_route_server.resource.virtual_router_ips[1]
   }
 }
 
@@ -121,6 +119,7 @@ module "avm_res_keyvault_vault" {
   }
 }
 
+#create a cisco 8k nva for demonstrating bgp peers
 module "cisco_8k" {
   source  = "Azure/avm-res-compute-virtualmachine/azurerm"
   version = "0.11.0"
@@ -201,6 +200,7 @@ module "full_route_server" {
   private_ip_allocation_method    = "Static"
   private_ip_address              = "10.0.1.10"
   resource_group_name             = azurerm_resource_group.this.name
+  resource_group_resource_id      = azurerm_resource_group.this.id
   route_server_subnet_resource_id = module.virtual_network.subnets["RouteServerSubnet"].id
 
   bgp_connections = {
@@ -211,9 +211,16 @@ module "full_route_server" {
     }
   }
 
+  /* add a lock if desired - leaving out so tests will run cleanly
+  lock = {
+    kind = "CanNotDelete"
+    name = "example-delete-lock"
+  }
+  */
+
   role_assignments = {
     role_assignment_1 = {
-      principal_id               = data.azurerm_client_config.current.client_id
+      principal_id               = data.azurerm_client_config.current.object_id
       role_definition_id_or_name = "Contributor"
       description                = "Assign the Contributor role to the deployment user on this route server resource scope."
     }
@@ -222,6 +229,10 @@ module "full_route_server" {
   tags = {
     "scenario" = "AVM full route server"
   }
+}
+
+output "resource_output" {
+  value = module.full_route_server.resource
 }
 ```
 
@@ -278,7 +289,11 @@ Default: `true`
 
 ## Outputs
 
-No outputs.
+The following outputs are exported:
+
+### <a name="output_resource_output"></a> [resource\_output](#output\_resource\_output)
+
+Description: n/a
 
 ## Modules
 

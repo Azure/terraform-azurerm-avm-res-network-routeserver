@@ -80,11 +80,16 @@ module "default" {
   location                        = azurerm_resource_group.this.location
   name                            = "${module.naming.virtual_wan.name_unique}-rs"
   resource_group_name             = azurerm_resource_group.this.name
+  resource_group_resource_id      = azurerm_resource_group.this.id
   private_ip_allocation_method    = "Dynamic"
   route_server_subnet_resource_id = module.virtual_network.subnets["RouteServerSubnet"].id
   enable_branch_to_branch         = true
 
   enable_telemetry = var.enable_telemetry
+}
+
+output "resource_output" {
+  value = module.default.resource
 }
 ```
 
@@ -137,7 +142,11 @@ Default: `true`
 
 ## Outputs
 
-No outputs.
+The following outputs are exported:
+
+### <a name="output_resource_output"></a> [resource\_output](#output\_resource\_output)
+
+Description: n/a
 
 ## Modules
 

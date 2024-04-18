@@ -41,7 +41,7 @@ variable "bgp_connections" {
   }))
   default     = {}
   description = "A map of bgp connections to make on each route server."
-  nullable = false
+  nullable    = false
 }
 
 variable "enable_branch_to_branch" {
@@ -81,16 +81,16 @@ variable "lock" {
   }
 }
 
-variable "private_ip_allocation_method" {
-  type        = string
-  description = "The private IP Address allocation method for this route server. Valid values are `Static` or `Dynamic`. Defaults to `Dynamic`."
-  default     = "Dynamic"
-}
-
 variable "private_ip_address" {
   type        = string
   default     = null
   description = "The private ip address to use for the route server IP_configuration if the `private_ip_allocation_method` is set to `Static`."
+}
+
+variable "private_ip_allocation_method" {
+  type        = string
+  default     = "Dynamic"
+  description = "The private IP Address allocation method for this route server. Valid values are `Static` or `Dynamic`. Defaults to `Dynamic`."
 }
 
 # tflint-ignore: terraform_unused_declarations
@@ -105,7 +105,6 @@ variable "role_assignments" {
     delegated_managed_identity_resource_id = optional(string, null)
   }))
   default     = {}
-  nullable    = false
   description = <<DESCRIPTION
 A map of role assignments to create on this resource. The map key is deliberately arbitrary to avoid issues where map keys maybe unknown at plan time.
 
@@ -118,6 +117,7 @@ A map of role assignments to create on this resource. The map key is deliberatel
 
 > Note: only set `skip_service_principal_aad_check` to true if you are assigning a role to a service principal.
 DESCRIPTION
+  nullable    = false
 }
 
 variable "routeserver_public_ip_name" {
@@ -131,5 +131,5 @@ variable "tags" {
   type        = map(any)
   default     = {}
   description = "The map of tags to be applied to the resource"
-  nullable = false
+  nullable    = false
 }

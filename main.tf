@@ -1,8 +1,5 @@
 resource "azapi_resource" "route_server_hub" {
-  type      = "Microsoft.Network/virtualHubs@2023-04-01"
-  name      = var.name
-  location  = var.location
-  parent_id = var.resource_group_resource_id
+  type = "Microsoft.Network/virtualHubs@2023-04-01"
   body = jsonencode({
     properties = {
       sku                        = "Standard"
@@ -10,8 +7,11 @@ resource "azapi_resource" "route_server_hub" {
       allowBranchToBranchTraffic = var.enable_branch_to_branch
     }
   })
-  schema_validation_enabled = false
+  location                  = var.location
+  name                      = var.name
+  parent_id                 = var.resource_group_resource_id
   response_export_values    = ["*"]
+  schema_validation_enabled = false
 }
 
 resource "azurerm_public_ip" "route_server_pip" {
@@ -24,10 +24,7 @@ resource "azurerm_public_ip" "route_server_pip" {
 }
 
 resource "azapi_resource" "route_server_ip_config_dynamic" {
-  type      = "Microsoft.Network/virtualHubs/ipConfigurations@2023-04-01"
-  name      = var.name
-  #location  = var.location
-  parent_id = azapi_resource.route_server_hub.id
+  type = "Microsoft.Network/virtualHubs/ipConfigurations@2023-04-01"
   body = jsonencode({
     properties = {
       subnet = {
@@ -37,25 +34,28 @@ resource "azapi_resource" "route_server_ip_config_dynamic" {
         id = azurerm_public_ip.route_server_pip.id
       }
       privateIPAllocationMethod = var.private_ip_allocation_method
-      privateIpAddress = (lower(var.private_ip_allocation_method) == "static" ? var.private_ip_address : null)
-  }
-})
-  schema_validation_enabled = false
+      privateIpAddress          = (lower(var.private_ip_allocation_method) == "static" ? var.private_ip_address : null)
+    }
+  })
+  name = var.name
+  #location  = var.location
+  parent_id                 = azapi_resource.route_server_hub.id
   response_export_values    = ["*"]
+  schema_validation_enabled = false
 }
 
 resource "time_sleep" "wait_300_seconds" {
-  depends_on = [ azapi_resource.route_server_ip_config_dynamic]
-
   create_duration = "300s"
+
+  depends_on = [azapi_resource.route_server_ip_config_dynamic]
 }
 
 #doing a forced read of the resource as the peer ips don't populate right away 
 data "azurerm_virtual_hub" "this" {
-    name = azapi_resource.route_server_hub.name
-    resource_group_name = var.resource_group_name
+  name                = azapi_resource.route_server_hub.name
+  resource_group_name = var.resource_group_name
 
-    depends_on = [ time_sleep.wait_300_seconds ]
+  depends_on = [time_sleep.wait_300_seconds]
 }
 
 resource "azurerm_virtual_hub_bgp_connection" "this" {
@@ -96,8 +96,8 @@ resource "azurerm_management_lock" "this" {
   name       = coalesce(var.lock.name, "lock-${var.name}")
   scope      = azapi_resource.route_server_hub.id
 
-  depends_on = [ 
+  depends_on = [
     azapi_resource.route_server_ip_config_dynamic,
     azurerm_virtual_hub_bgp_connection.this
-   ]
+  ]
 }
