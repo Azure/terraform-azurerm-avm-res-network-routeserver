@@ -73,7 +73,6 @@ variable "lock" {
   })
   default     = {}
   description = "The lock level to apply to the Route Server Virtual Hub. Default is `None`. Possible values are `None`, `CanNotDelete`, and `ReadOnly`."
-  nullable    = false
 
   validation {
     condition     = contains(["CanNotDelete", "ReadOnly", "None"], var.lock.kind)
@@ -131,5 +130,4 @@ variable "tags" {
   type        = map(any)
   default     = {}
   description = "The map of tags to be applied to the resource"
-  nullable    = false
 }
