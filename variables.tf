@@ -71,12 +71,13 @@ variable "lock" {
     kind = string
     name = optional(string, null)
   })
+
   default     = null
   description = <<DESCRIPTION
-  Controls the Resource Lock configuration for this resource. The following properties can be specified:
-  
-  - `kind` - (Required) The type of lock. Possible values are `\"CanNotDelete\"` and `\"ReadOnly\"`.
-  - `name` - (Optional) The name of the lock. If not specified, a name will be generated based on the `kind` value. Changing this forces the creation of a new resource.
+Controls the Resource Lock configuration for this resource. The following properties can be specified:
+
+- `kind` - (Required) The type of lock. Possible values are `\"CanNotDelete\"` and `\"ReadOnly\"`.
+- `name` - (Optional) The name of the lock. If not specified, a name will be generated based on the `kind` value. Changing this forces the creation of a new resource.
   DESCRIPTION
 
   validation {
@@ -123,7 +124,9 @@ A map of role assignments to create on the <RESOURCE>. The map key is deliberate
 - `principal_type` - (Optional) The type of the `principal_id`. Possible values are `User`, `Group` and `ServicePrincipal`. It is necessary to explicitly set this attribute when creating role assignments if the principal creating the assignment is constrained by ABAC rules that filters on the PrincipalType attribute.
 
 > Note: only set `skip_service_principal_aad_check` to true if you are assigning a role to a service principal.
+
 DESCRIPTION  
+
   nullable    = false
 }
 

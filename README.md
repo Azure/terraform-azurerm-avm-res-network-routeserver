@@ -133,6 +133,7 @@ Default: `"ExpressRoute"`
 
 ### <a name="input_lock"></a> [lock](#input\_lock)
 
+
 Description:   Controls the Resource Lock configuration for this resource. The following properties can be specified:
 
   - `kind` - (Required) The type of lock. Possible values are `\"CanNotDelete\"` and `\"ReadOnly\"`.
