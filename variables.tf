@@ -40,7 +40,13 @@ variable "bgp_connections" {
     peer_ip  = string
   }))
   default     = {}
-  description = "A map of bgp connections to make on each route server."
+  description = <<DESCRIPTION
+A map of bgp connections to make on each route server."
+- `<map key>` - An arbitrary map key to differentiate each instance of the map.
+  - `name` - (Required) - The name to use for the bgp connection
+  - `peer_asn` - (Required) - The ASN for the peer NVA
+  - `peer_ip` - (Required) - The IP address for the peer NVA
+DESCRIPTION
   nullable    = false
 }
 
@@ -78,7 +84,7 @@ Controls the Resource Lock configuration for this resource. The following proper
 
 - `kind` - (Required) The type of lock. Possible values are `\"CanNotDelete\"` and `\"ReadOnly\"`.
 - `name` - (Optional) The name of the lock. If not specified, a name will be generated based on the `kind` value. Changing this forces the creation of a new resource.
-  DESCRIPTION
+DESCRIPTION
 
   validation {
     condition     = var.lock != null ? contains(["CanNotDelete", "ReadOnly"], var.lock.kind) : true
@@ -124,9 +130,7 @@ A map of role assignments to create on the <RESOURCE>. The map key is deliberate
 - `principal_type` - (Optional) The type of the `principal_id`. Possible values are `User`, `Group` and `ServicePrincipal`. It is necessary to explicitly set this attribute when creating role assignments if the principal creating the assignment is constrained by ABAC rules that filters on the PrincipalType attribute.
 
 > Note: only set `skip_service_principal_aad_check` to true if you are assigning a role to a service principal.
-
 DESCRIPTION  
-
   nullable    = false
 }
 
