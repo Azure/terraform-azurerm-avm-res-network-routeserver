@@ -91,7 +91,11 @@ The following input variables are optional (have default values):
 
 ### <a name="input_bgp_connections"></a> [bgp\_connections](#input\_bgp\_connections)
 
-Description: A map of bgp connections to make on each route server.
+Description: A map of bgp connections to make on each route server."
+- `<map key>` - An arbitrary map key to differentiate each instance of the map.
+  - `name` - (Required) - The name to use for the bgp connection
+  - `peer_asn` - (Required) - The ASN for the peer NVA
+  - `peer_ip` - (Required) - The IP address for the peer NVA
 
 Type:
 
@@ -133,11 +137,10 @@ Default: `"ExpressRoute"`
 
 ### <a name="input_lock"></a> [lock](#input\_lock)
 
+Description: Controls the Resource Lock configuration for this resource. The following properties can be specified:
 
-Description:   Controls the Resource Lock configuration for this resource. The following properties can be specified:
-
-  - `kind` - (Required) The type of lock. Possible values are `\"CanNotDelete\"` and `\"ReadOnly\"`.
-  - `name` - (Optional) The name of the lock. If not specified, a name will be generated based on the `kind` value. Changing this forces the creation of a new resource.
+- `kind` - (Required) The type of lock. Possible values are `\"CanNotDelete\"` and `\"ReadOnly\"`.
+- `name` - (Optional) The name of the lock. If not specified, a name will be generated based on the `kind` value. Changing this forces the creation of a new resource.
 
 Type:
 
@@ -220,7 +223,14 @@ The following outputs are exported:
 
 ### <a name="output_resource"></a> [resource](#output\_resource)
 
-Description: This is the full output for the resource.
+Description: This is the full output for the resource. It contains the following properties:
+
+- `id` - type: string - The Azure Resource ID of the virtual hub resource that this route server is associated to.
+- `location` - type: string - The azure location of the route server resource.
+- `name` - type: string - The name of the route server resource.
+- `tags' - type: map(string) - A tags map for any directly assigned tags for the route server resource.
+- 'virtual_router_asn` - type: number - The ASN number for the route server resource.
+- `virtual_router_ips` - type: list(string) - A list containing the peer ip's for route server.
 
 ## Modules
 

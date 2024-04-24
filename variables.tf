@@ -77,7 +77,6 @@ variable "lock" {
     kind = string
     name = optional(string, null)
   })
-
   default     = null
   description = <<DESCRIPTION
 Controls the Resource Lock configuration for this resource. The following properties can be specified:

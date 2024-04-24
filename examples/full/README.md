@@ -190,7 +190,7 @@ data "azurerm_client_config" "current" {}
 module "full_route_server" {
   source = "../.."
   # source             = "Azure/avm-res-network-routeserver/azurerm"
-  # version            = "0.1.0"
+  # version            = "0.1.1"
 
   enable_branch_to_branch         = true
   enable_telemetry                = var.enable_telemetry

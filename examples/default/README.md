@@ -75,7 +75,7 @@ module "virtual_network" {
 module "default" {
   source = "../.."
   # source             = "Azure/avm-res-network-routeserver/azurerm"
-  # version            = "0.1.0"
+  # version            = "0.1.1"
 
   location                        = azurerm_resource_group.this.location
   name                            = "${module.naming.virtual_wan.name_unique}-rs"
