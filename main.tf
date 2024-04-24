@@ -37,7 +37,6 @@ resource "azapi_resource" "route_server_ip_config_dynamic" {
       privateIpAddress          = (lower(var.private_ip_allocation_method) == "static" ? var.private_ip_address : null)
     }
   })
-
   name                      = var.name
   parent_id                 = azapi_resource.route_server_hub.id
   response_export_values    = ["*"]
