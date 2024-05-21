@@ -17,7 +17,15 @@ terraform {
 }
 
 provider "azurerm" {
-  features {}
+  features {
+    resource_group {
+      prevent_deletion_if_contains_resources = false
+    }
+  }
+}
+
+provider "azapi" {
+  enable_hcl_output_for_data_source = true
 }
 
 ## Section to provide a random Azure region for the resource group
@@ -106,10 +114,34 @@ module "avm_res_keyvault_vault" {
   }
 }
 
+#Agree to the marketplace offering if it hasn't been already
+locals {
+  offer     = "cisco-c8000v-byol"
+  plan      = "17_12_02-byol"
+  publisher = "cisco"
+}
+
+data "azurerm_subscription" "current" {}
+
+data "azapi_resource_action" "plans" {
+  type                   = "Microsoft.MarketplaceOrdering/offertypes/publishers/offers/plans/agreements@2021-01-01"
+  method                 = "GET"
+  resource_id            = "${data.azurerm_subscription.current.id}/providers/Microsoft.MarketplaceOrdering/offerTypes/virtualmachine/publishers/${local.publisher}/offers/${local.offer}/plans/${local.plan}/agreements/current"
+  response_export_values = ["*"]
+}
+
+resource "azurerm_marketplace_agreement" "cisco" {
+  count = data.azapi_resource_action.plans.output.properties.accepted == true ? 0 : 1
+
+  offer     = local.offer
+  plan      = local.plan
+  publisher = local.publisher
+}
+
 #create a cisco 8k nva for demonstrating bgp peers
 module "cisco_8k" {
   source  = "Azure/avm-res-compute-virtualmachine/azurerm"
-  version = "0.11.0"
+  version = "0.13.0"
 
   admin_credential_key_vault_resource_id = module.avm_res_keyvault_vault.resource.id
   admin_username                         = "azureuser"
@@ -150,16 +182,16 @@ module "cisco_8k" {
   }
 
   plan = {
-    name      = "17_12_02-byol"
-    product   = "cisco-c8000v-byol"
-    publisher = "cisco"
+    name      = local.plan
+    product   = local.offer
+    publisher = local.publisher
 
   }
 
   source_image_reference = {
-    publisher = "cisco"
-    offer     = "cisco-c8000v-byol"
-    sku       = "17_12_02-byol"
+    publisher = local.publisher
+    offer     = local.offer
+    sku       = local.plan
     version   = "latest"
   }
 
@@ -168,7 +200,7 @@ module "cisco_8k" {
   }
 
   depends_on = [
-    module.avm_res_keyvault_vault
+    module.avm_res_keyvault_vault, azurerm_marketplace_agreement.cisco
   ]
 }
 
@@ -197,6 +229,16 @@ module "full_route_server" {
       peer_ip  = "10.0.2.5"
     }
   }
+
+  routeserver_public_ip_config = {
+    name              = "routeserver-pip"
+    allocation_method = "Static"
+    ip_version        = "IPv4"
+    sku               = "Standard"
+    sku_tier          = "Regional"
+    zones             = ["1", "2", "3"]
+  }
+
 
   /* add a lock if desired - leaving out so tests will run cleanly
   lock = {

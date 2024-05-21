@@ -30,7 +30,15 @@ terraform {
 }
 
 provider "azurerm" {
-  features {}
+  features {
+    resource_group {
+      prevent_deletion_if_contains_resources = false
+    }
+  }
+}
+
+provider "azapi" {
+  enable_hcl_output_for_data_source = true
 }
 
 ## Section to provide a random Azure region for the resource group
@@ -119,10 +127,34 @@ module "avm_res_keyvault_vault" {
   }
 }
 
+#Agree to the marketplace offering if it hasn't been already
+locals {
+  offer     = "cisco-c8000v-byol"
+  plan      = "17_12_02-byol"
+  publisher = "cisco"
+}
+
+data "azurerm_subscription" "current" {}
+
+data "azapi_resource_action" "plans" {
+  type                   = "Microsoft.MarketplaceOrdering/offertypes/publishers/offers/plans/agreements@2021-01-01"
+  method                 = "GET"
+  resource_id            = "${data.azurerm_subscription.current.id}/providers/Microsoft.MarketplaceOrdering/offerTypes/virtualmachine/publishers/${local.publisher}/offers/${local.offer}/plans/${local.plan}/agreements/current"
+  response_export_values = ["*"]
+}
+
+resource "azurerm_marketplace_agreement" "cisco" {
+  count = data.azapi_resource_action.plans.output.properties.accepted == true ? 0 : 1
+
+  offer     = local.offer
+  plan      = local.plan
+  publisher = local.publisher
+}
+
 #create a cisco 8k nva for demonstrating bgp peers
 module "cisco_8k" {
   source  = "Azure/avm-res-compute-virtualmachine/azurerm"
-  version = "0.11.0"
+  version = "0.13.0"
 
   admin_credential_key_vault_resource_id = module.avm_res_keyvault_vault.resource.id
   admin_username                         = "azureuser"
@@ -163,16 +195,16 @@ module "cisco_8k" {
   }
 
   plan = {
-    name      = "17_12_02-byol"
-    product   = "cisco-c8000v-byol"
-    publisher = "cisco"
+    name      = local.plan
+    product   = local.offer
+    publisher = local.publisher
 
   }
 
   source_image_reference = {
-    publisher = "cisco"
-    offer     = "cisco-c8000v-byol"
-    sku       = "17_12_02-byol"
+    publisher = local.publisher
+    offer     = local.offer
+    sku       = local.plan
     version   = "latest"
   }
 
@@ -181,7 +213,7 @@ module "cisco_8k" {
   }
 
   depends_on = [
-    module.avm_res_keyvault_vault
+    module.avm_res_keyvault_vault, azurerm_marketplace_agreement.cisco
   ]
 }
 
@@ -210,6 +242,16 @@ module "full_route_server" {
       peer_ip  = "10.0.2.5"
     }
   }
+
+  routeserver_public_ip_config = {
+    name              = "routeserver-pip"
+    allocation_method = "Static"
+    ip_version        = "IPv4"
+    sku               = "Standard"
+    sku_tier          = "Regional"
+    zones             = ["1", "2", "3"]
+  }
+
 
   /* add a lock if desired - leaving out so tests will run cleanly
   lock = {
@@ -253,6 +295,8 @@ The following requirements are needed by this module:
 
 The following providers are used by this module:
 
+- <a name="provider_azapi"></a> [azapi](#provider\_azapi) (~> 1.9)
+
 - <a name="provider_azurerm"></a> [azurerm](#provider\_azurerm) (~> 3.74)
 
 - <a name="provider_random"></a> [random](#provider\_random) (~> 3.5)
@@ -263,9 +307,12 @@ The following providers are used by this module:
 
 The following resources are used by this module:
 
+- [azurerm_marketplace_agreement.cisco](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/marketplace_agreement) (resource)
 - [azurerm_resource_group.this](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/resource_group) (resource)
 - [random_integer.region_index](https://registry.terraform.io/providers/hashicorp/random/latest/docs/resources/integer) (resource)
+- [azapi_resource_action.plans](https://registry.terraform.io/providers/Azure/azapi/latest/docs/data-sources/resource_action) (data source)
 - [azurerm_client_config.current](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/data-sources/client_config) (data source)
+- [azurerm_subscription.current](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/data-sources/subscription) (data source)
 - [template_file.node_config](https://registry.terraform.io/providers/hashicorp/template/latest/docs/data-sources/file) (data source)
 
 <!-- markdownlint-disable MD013 -->
@@ -309,7 +356,7 @@ Version: >= 0.5.0
 
 Source: Azure/avm-res-compute-virtualmachine/azurerm
 
-Version: 0.11.0
+Version: 0.13.0
 
 ### <a name="module_full_route_server"></a> [full\_route\_server](#module\_full\_route\_server)
 

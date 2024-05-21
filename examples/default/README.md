@@ -23,9 +23,16 @@ terraform {
 }
 
 provider "azurerm" {
-  features {}
+  features {
+    resource_group {
+      prevent_deletion_if_contains_resources = false
+    }
+  }
 }
 
+provider "azapi" {
+  enable_hcl_output_for_data_source = true
+}
 
 ## Section to provide a random Azure region for the resource group
 # This allows us to randomize the region for the resource group.
@@ -84,6 +91,10 @@ module "default" {
   private_ip_allocation_method    = "Dynamic"
   route_server_subnet_resource_id = module.virtual_network.subnets["RouteServerSubnet"].id
   enable_branch_to_branch         = true
+
+  routeserver_public_ip_config = {
+    name = "routeserver-pip"
+  }
 
   enable_telemetry = var.enable_telemetry
 }
